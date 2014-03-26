@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++0x   CMakeFiles/tracker.dir/GaussianMatrix.cpp.o CMakeFiles/tracker.dir/main.cpp.o  -o ../build/tracker -rdynamic 
