@@ -5,8 +5,10 @@
 #include <vector>
 #include <limits>
 #include <iomanip>
+#include <unistd.h>
 
 #include <cmath> // square root
+
 
 #include "Def.h"
 #include "Combinations.h"
