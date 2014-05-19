@@ -2,6 +2,11 @@
 #include <stdint.h>
 #include <vector>
 
+/** initialization of selected ground stations 
+ *  @param n a number of all ground station
+ *  @param k a number of selected ground station
+ *  @return number with n-k bits '0' on the beginning and k bits '1' 
+ */
 uint64_t initialBitCombination( int n, int k )
 {
   uint64_t result = 1;
@@ -14,10 +19,14 @@ uint64_t initialBitCombination( int n, int k )
   return result;
 }
 
-// algorithm: http://www-graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
-// t = v | (v - 1); // t gets v's least significant 0 bits set to 1
-// Next set to 1 the most significant bit to change,
-// set to 0 the least significant ones, and add the necessary 1 bits. 
+/** calculation of next combination of bits equal to 1 for given number
+ *  algorithm: http://www-graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
+ *  t = v | (v - 1); // t gets v's least significant 0 bits set to 1
+ *  Next set to 1 the most significant bit to change,
+ *  set to 0 the least significant ones, and add the necessary 1 bits. 
+ *  @param currentBitCombination a number of which bits equal to '1' represent selected ground stations
+ *  @return next combination of bits equal to 1
+ */
 uint64_t nextBitCombination( uint64_t currentBitCombination )
 {
   uint64_t t = ( currentBitCombination | ( currentBitCombination -1 )) + 1;
@@ -28,6 +37,11 @@ uint64_t nextBitCombination( uint64_t currentBitCombination )
 //  return (t + 1) | (((~t & -~t) - 1) >> (__builtin_ctz( currentBitCombination ) + 1));
 }
 
+/** generating list of ground stations
+ *  @param n number of all ground station
+ *  @param k number of selected ground station
+ *  @return vector of vectors containing numbers of selected ground stations 
+ */
 std::vector< std::vector< int > > getStationsCombinations( int n, int k )
 {
   uint64_t v = initialBitCombination( n, k ); // current permutation of bits

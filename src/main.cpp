@@ -15,6 +15,7 @@
 #include "GaussianMatrix.h"
 
 /** loading data from file "stations.txt"
+ *  @lFileName a name of file which contains data
  *  @param mStations a contener of stations 
  */
 void loadStations( char* lFileName, Stations& mStations )
@@ -36,6 +37,9 @@ void loadStations( char* lFileName, Stations& mStations )
     lFile.close();
 }
 
+/** solving Apollonius problem for set of stations
+ *  @aStations a vector which contains stations
+ */
 PositionsList solveApol( std::vector< Station > aStations ) 
 {
     PositionsList calculatedPositions;
