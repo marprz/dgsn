@@ -5,12 +5,12 @@
 #include <vector>
 #include <array> 
 #include <string>
+#include <tuple>
 
 /// Row type
 typedef std::vector< double > Row;
 /// Matrix type
 typedef std::vector< Row > Matrix;
-
 /**
  * @brief Station class
  */
@@ -22,9 +22,9 @@ class Station
      * @param ax coordinate x
      * @param ay coordinate y
      * @param az coordinate z
-     * @param at time
+     * @param at time of receiving signal
      */
-    Station( double ax, double ay, double az, double at )
+    Station( double ax, double ay, double az, long double at )
     : x( ax )
     , y( ay )
     , z( az )
@@ -33,14 +33,31 @@ class Station
     }
 
     /**
+     * @brief Constructor.
+     * @param ax coordinate x
+     * @param ay coordinate y
+     * @param az coordinate z
+     * @param at0 time of sending signal
+     * @param atR time of receiving signal
+     */
+    Station( double ax, double ay, double az, long double at0, long double aR )
+    : x( ax )
+    , y( ay )
+    , z( az )
+    , r( aR )
+    {
+     //   setR( at0 );
+        std::cout << "time of sending of a new signal: " << at0 << std::endl;
+    }
+    /**
      * @brief Sets radius.
      * @param aT0 time of sending signal
      */
-    void setR( double aT0 ) 
+    void setR( long double aT0 ) 
     {
         double clight = 299792458; // [m/s]
-	dt = t-aT0;
-	r = dt*clight;
+    	dt = t-aT0;
+	    r = dt*clight;
     }
 
     /**
@@ -66,14 +83,18 @@ class Station
      * @return radius r
      */
     double getR() const { return r; }
+    void addToZ( int a )
+    {
+        z = z+a;
+    }
 
   private:
     double x;  ///< Coordinate x.
     double y;  ///< Coordinate y.
     double z;  ///< Coordinate z.
-    double t;  ///< Time of receiving signal.
+    long double t;  ///< Time of receiving signal.
     double r;  ///< Distance of vehicle from the station at time t-dt.
-    double dt; ///< Difference between time of receiving signal by ground station and sending by the vehicle.
+    long double dt; ///< Difference between time of receiving signal by ground station and sending by the vehicle.
 };
 
 /**
@@ -93,9 +114,16 @@ class Stations
      */
     void addStation( Station aStation )
     {
-    	aStation.setR( mT );
+//    	aStation.setR( mT );
         mStations.push_back( aStation );
-        std::vector< Station >::iterator iter;
+ //       std::cout << "Stations::addStation(): mT=" << mT << ", R=" << mStations.back().getR() << std::endl;
+    }
+
+    void addStation( double ax, double ay, double az, long double at0, long double aR )
+    {
+        Station aStation( ax, ay, az, at0, aR );
+        mStations.push_back( aStation );
+     //   std::cout << "Stations::addStation( 5xdouble ), r = " << aR << std::endl;
     }
 
     /**
@@ -105,7 +133,7 @@ class Stations
      * @param az coordinate z
      * @param at time of receiving signal
      */
-    void addStations( double ax, double ay, double az, double at )
+    void addStations( double ax, double ay, double az, long double at )
     {
 	    Station aStation( ax, ay, az, at );
 	    mStations.push_back( aStation );
@@ -115,7 +143,7 @@ class Stations
      * @brief Sets time of receiving signal.
      * @param aT time of receiving signal
      */
-    void setTime( double aT )
+    void setTime( long double aT )
     {
 	    mT = aT;
     }
@@ -152,7 +180,7 @@ class Stations
 
 //  private:
     std::vector< Station > mStations;  
-    double mT;
+    long double mT;
 };
 
 typedef std::array< double, 4 > Position; // xs,ys,zs,rs from Apollonius 
@@ -259,7 +287,7 @@ class PositionsList
         std::vector< Position >::iterator iter;
     	for( iter = mPositions.begin(); iter != mPositions.end(); ++iter )
 	    {
-	        std::cout << (*iter).at(0) << ", " << (*iter).at(1) << ", " << (*iter).at(2) << std::endl;
+	        std::cout << "calculated: " << (*iter).at(0) << ", " << (*iter).at(1) << ", " << (*iter).at(2) << std::endl;
     	}
     }
     
@@ -283,4 +311,79 @@ class PositionsList
   private:
     std::vector< Position > mPositions; ///< Container of positions.
 };
+
+
+class Signal
+{
+public:
+    Signal(){} // pozbyc sie go
+    Signal( int satId, long double timestamp ) // ma zostac 
+    : mSatId( satId )
+    , mTimestamp( timestamp )
+    {
+    
+    }
+    void addGroundStation( double ax, double ay, double az, double ar )
+    {
+        mGroundStations.push_back( std::make_tuple( ax, ay, az, ar ) );
+    }
+
+    void addGroundStation( double ax, double ay, double az, long double at0, double adt )
+    {
+    //    std::cout << "Signal::addGroundStation(): mTimestamp = " << mTimestamp << std::endl;
+        double clight = 299792458; // [m/s]
+        double r = clight*adt;
+        mGroundStations.push_back( std::make_tuple( ax, ay, az, r ) );
+    //    std::cout << "Signal::addGroundStation(): r = " << r << std::endl;
+    }
+
+    void convertSignalToStation( Stations& aStations )
+    {
+        std::vector< std::tuple< double, double, double, double > >::iterator it;
+        for( it = mGroundStations.begin(); it != mGroundStations.end(); ++it )
+        {
+      //      std::cout << "Signal::convertSignalToStation(): " << std::get<3>(*it) << std::endl;
+            Station lStation( std::get<0>(*it), std::get<1>(*it), std::get<2>(*it), mTimestamp, std::get<3>(*it) );
+            aStations.addStation( lStation );
+        }
+    }
+
+    bool positionKnown ( double ax, double ay, double az )
+    {
+        bool isKnown = false;
+        std::vector< std::tuple< double, double, double, double > >::iterator it;
+        for( it = mGroundStations.begin(); it != mGroundStations.end(); ++it )
+        {
+            if( std::get<0>(*it) == ax &&
+                    std::get<1>(*it) == ay &&
+                    std::get<2>(*it) == az )
+                isKnown = true;
+        }
+        return isKnown;
+    }
+
+    void printSignal()
+    {
+        std::cout << "Satellite Id: " << mSatId << ", time of sending singal: " << mTimestamp << std::endl;
+        std::vector< std::tuple< double, double, double, double > >::iterator iter;
+        int lCounter = 0;
+        for( iter = mGroundStations.begin(); iter < mGroundStations.end(); ++iter )
+        {
+            std::cout << ++lCounter << ". Position (" <<  std::get<0>(*iter) << ", " << std::get<1>(*iter) << ", " ;
+            std::cout << std::get<2>(*iter) << "). Distance: " << std::get<3>(*iter) << std::endl;
+        }
+    }
+    void setSatId( int aId ){ mSatId = aId; }
+    void setTimestamp( long double aTimestamp ){ mTimestamp = aTimestamp; }
+    int getSatId() const { return mSatId; }
+    long double getTimestamp() const { return mTimestamp; }
+    int getSize() const { return mGroundStations.size(); }
+
+private: 
+    int mSatId; 
+    long double mTimestamp; 
+    std::vector< std::tuple< double, double, double, double > > mGroundStations;
+};
+
+
 #endif

@@ -6,13 +6,172 @@
 #include <limits>
 #include <iomanip>
 #include <unistd.h>
+#include <tuple>
 
 #include <cmath> // square root
-
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "Def.h"
 #include "Combinations.h"
 #include "GaussianMatrix.h"
+#include "Apollonius.h"
+
+PositionsList solveApol( std::vector< Station > aStations );
+
+// int - timestamp, Stations - positions of gs and distances from satellite
+//typedef std::tuple< int, Stations > Signal;
+//typedef std::vector< Signal > Signals;
+
+void processSignalData()
+{
+    std::cout << "********* PROCESSING SIGNALS *****************************" << std::endl;
+    std::vector< Signal >::iterator iter;
+    for( iter = mSignals.begin(); iter != mSignals.end(); ++iter )
+    {
+        int satId = (*iter).getSatId();
+        long double timestamp = (*iter).getTimestamp();
+
+        if( (*iter).getSize() > 3 )
+        {
+            std::cout << "For satellite " << (*iter).getSatId() << " and timestamp " << (*iter).getTimestamp() << " there are " << (*iter).getSize() << " GS" << std::endl;
+            (*iter).printSignal();
+            Stations mStations;
+            
+            (*iter).convertSignalToStation( mStations );
+
+            std::vector< std::vector< int > > stationsComb;
+
+            std::cout << "Number of ground stations: " << mStations.size() << std::endl;
+            stationsComb = getStationsCombinations( mStations.size(), 4 );
+	        std::cout << "Number of combinations: " << stationsComb.size() << std::endl;
+            PositionsList xyzr;
+        
+            std::vector< std::vector< int > >::iterator iter; 
+
+            int it = 0;
+//            std::vector< Signal >::iterator iter2;
+            for( auto iter2 = stationsComb.begin(); it < 4; ++iter2 )
+            {
+                std::cout << mStations.getStation(it).getX() << ", " << mStations.getStation(it).getY() << ", " << mStations.getStation(it).getZ() << ". R:" << mStations.getStation(it).getR() << std::endl;
+                ++it;
+            }
+        	for( auto iter2 = stationsComb.begin(); iter2 != stationsComb.end(); ++iter2 )
+	        {
+                std::vector< Station > takenStations;
+	            for( int j=0; j<4; ++j )
+         	    {
+                    takenStations.push_back(  mStations.getStation( (*iter2).at(j) ));
+                }
+                xyzr.addPositions( solveApol( satId, timestamp, takenStations ) );
+            }
+            xyzr.printPositions();
+            mStations.printStations();
+            xyzr.printAveragePosition();
+        }
+        else
+        {
+            std::cout << "For satellite " << (*iter).getSatId() << " with sending time " << (*iter).getTimestamp() << " only " << (*iter).getSize() << " GS found" << std::endl;
+        }
+    }
+
+}
+void loadGSData( const char* lFileName )//, Signals& mSignals )
+{
+    Stations mStations;
+    std::fstream lFile;
+    lFile.open( lFileName, std::ios::in );
+    if( !lFile.is_open() )
+    	std::cout << "ERROR: problem with file" << std::endl;
+
+    double ax, ay, az;
+    long double at0, adt;
+    int satId;
+    std::string op1;
+   // lFile >> at;
+  //  mStations.setTime( at );
+    while( lFile >> ax >> ay >> az >> adt >> at0 >> satId >> op1  )
+    {
+    //    at0 = 0; // tymczasowo
+        bool satKnown = false;
+        std::vector< Signal >::iterator iter;
+//        std::cout << "mSignals.size() == " << mSignals.size() << std::endl;
+/*        if( !mSignals.empty() )
+        {
+            std::cout << "first signal for satellite " << satId << " and timestamp " << at0 << std::endl;
+        }*/
+
+        for( iter = mSignals.begin(); !satKnown && iter != mSignals.end(); ++iter )
+        {
+//            std::cout << "   Comparing timestamps: " << at0 << " and " << (*iter).getTimestamp() << std::endl;
+            if( (*iter).getSatId() == satId && (*iter).getTimestamp() == at0 )
+            {
+                if (!(*iter).positionKnown( ax, ay, az ))
+                {
+//                std::cout << "Known satellite with id: " << satId << std::endl;
+                    (*iter).addGroundStation( ax, ay, az, at0, adt );
+                }
+                satKnown = true; // bez tego tez sie da
+            }
+        }
+
+        if( !satKnown )
+        {
+            Signal mSignal;
+            mSignal.setSatId( satId );
+            mSignal.setTimestamp( at0 );
+//        std::cout << "Adding new satellite: " << ax << " " << ay << " " <<  az << " " <<  at0 << " " <<  adt << " " <<  satId << " " << op1 << std::endl;
+            mSignal.addGroundStation( ax, ay, az, at0, adt ); 
+            mSignals.push_back( mSignal );
+          /*  double clight = 299792458;
+            double ar = clight*(atR-at0);
+    	    mStations.addStation( ax, ay, az, at0, atR ); // zostanie tylko signal
+          */
+        }
+    }
+   /* std::cout << "first signal: " << mSignals.begin()->getSize() << std::endl;
+
+    // printing:
+    std::cout << "Known signals (" << mSignals.size() << "): " << std::endl;
+    std::vector< Signal >::iterator it;
+    for( it = mSignals.begin(); it != mSignals.end(); ++it )
+    {
+        (*it).printSignal();
+    }
+    std::cout << "****************" << std::endl << std::endl;
+*/
+    lFile.close();
+}
+
+void loadFromDirectory( char* lDirName )//, Signals& mSignals )
+{
+    std::string file;
+    DIR *dir;
+    struct dirent *dirEnt;
+    struct stat filestat;
+    dir = opendir( lDirName );
+    if( dir == NULL )
+    {
+        std::cout << "ERROR: Problem with directory" << std::endl;
+    }
+    else
+    {
+        while( dirEnt = readdir( dir ) )
+        {
+            file = std::string(lDirName) + "/" + dirEnt->d_name;
+
+            if( stat( file.c_str(), &filestat )) continue;
+            if( S_ISDIR( filestat.st_mode ) ) continue;
+
+            std::cout << "Processing file: " << file << std::endl;
+            loadGSData( file.c_str() ); //, mSignals );            
+
+        }
+        closedir( dir );
+    }
+}
 
 /** loading data from file "stations.txt"
  *  @lFileName a name of file which contains data
@@ -32,7 +191,7 @@ void loadStations( char* lFileName, Stations& mStations )
     mStations.setTime( at );
     while( lFile >> ax >> ay >> az >> at )
     {
-	mStations.addStation( Station( ax, ay, az, at ) );
+    	mStations.addStation( Station( ax, ay, az, at ) );
     }
     lFile.close();
 }
@@ -40,6 +199,7 @@ void loadStations( char* lFileName, Stations& mStations )
 /** solving Apollonius problem for set of stations
  *  @aStations a vector which contains stations
  */
+/*
 PositionsList solveApol( std::vector< Station > aStations ) 
 {
     PositionsList calculatedPositions;
@@ -103,48 +263,57 @@ PositionsList solveApol( std::vector< Station > aStations )
         calculatedPositions.addPosition( solution );
     }
 */
-    return calculatedPositions;
-}
+//    return calculatedPositions;
+//}
 
 int main( int argc, char* argv[] )
 {
     Stations mStations;
-    int c = getopt( argc, argv, "f:" );
+//    Signals mSignals;
+    bool test = false;
+    int c = getopt( argc, argv, "fd:" );
     switch( c ){
+    case 'd':
+        loadFromDirectory( optarg );
+        processSignalData();
+        //loadFromDirectory( optarg, mSignals );
+        break;
 	case 'f':
 	    loadStations( optarg, mStations );
+        test = true;
 	    break;
-        default:
+    default:
 	    std::cout << "Missing file name! Use parameter -f filename." << std::endl;
 	    return -1;
     }
-    std::vector< std::vector< int > > stationsComb;
-    std::vector< Station > takenStations;
 
-    if( mStations.size() > 3 )
+    if( test )
     {
-        std::cout << "Number of ground stations: " << mStations.size() << std::endl;
-        stationsComb = getStationsCombinations( mStations.size(), 4 );
-	std::cout << "Number of combinations: " << stationsComb.size() << std::endl;
-        PositionsList xyzr;
+        std::vector< std::vector< int > > stationsComb;
+        std::vector< Station > takenStations;
+
+        if( mStations.size() > 3 )
+        {
+            std::cout << "Number of ground stations: " << mStations.size() << std::endl;
+            stationsComb = getStationsCombinations( mStations.size(), 4 );
+	        std::cout << "Number of combinations: " << stationsComb.size() << std::endl;
+            PositionsList xyzr;
         
-        std::vector< std::vector< int > >::iterator iter; 
-	for( iter = stationsComb.begin(); iter != stationsComb.end(); ++iter )
-	{
-	    for( int j=0; j<4; ++j )
- 	    {
-                takenStations.push_back(  mStations.getStation( (*iter).at(j) ));
+            std::vector< std::vector< int > >::iterator iter; 
+        	for( iter = stationsComb.begin(); iter != stationsComb.end(); ++iter )
+	        {
+	            for( int j=0; j<4; ++j )
+         	    {
+                    takenStations.push_back(  mStations.getStation( (*iter).at(j) ));
+                }
+                xyzr.addPositions( solveApol( 0, 0, takenStations ) );
             }
-            xyzr.addPositions( solveApol( takenStations ) );
+            xyzr.printAveragePosition();
         }
-
-        xyzr.printAveragePosition();
+        else
+        {
+            std::cout << "File stations.txt have to contain more ground stations!" << std::endl;
+        }
     }
-    else
-    {
-        std::cout << "File stations.txt have to contain more ground stations!" << std::endl;
-    }
-    
     return 0;
-
 }
