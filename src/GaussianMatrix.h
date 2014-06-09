@@ -5,15 +5,20 @@
 #include <vector>
 #include <stdlib.h>
 
-#include "Def.h"
+//#include "Def.h"
+//
+typedef std::vector< double > Row;
+typedef std::vector< Row > Matrix;
 
 class GaussianMatrix
 {
   public:
-    GaussianMatrix(){}
+    GaussianMatrix(); //{}
     GaussianMatrix( std::vector< std::vector< double > >  aData );
     void setData( std::vector< std::vector< double > >  aData );
+    void overdetermined();
     void makeGaussian();
+    void makeGaussian2();
     void printData();
     double operator() ( int r, int c ){ return (mData.at(r-1)).at(c-1); } 
     int getRowsNb();

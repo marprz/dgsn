@@ -48,8 +48,8 @@ void processSignalData()
             stationsComb = getStationsCombinations( mStations.size(), 4 );
 	        std::cout << "Number of combinations: " << stationsComb.size() << std::endl;
             PositionsList xyzr;
+            PositionsList xyzr2;
         
-            std::vector< std::vector< int > >::iterator iter; 
 
             int it = 0;
 //            std::vector< Signal >::iterator iter2;
@@ -70,6 +70,16 @@ void processSignalData()
             xyzr.printPositions();
             mStations.printStations();
             xyzr.printAveragePosition();
+
+            std::vector< Station > takenStations2;
+            for( int i=0; i<mStations.size(); ++i )
+            {
+                std::cout << "adding station: " << i << std::endl;
+                takenStations2.push_back( mStations.getStation( i ) );
+            }
+            xyzr2.addPositions( solveApol( satId, timestamp, takenStations2 ) );
+            xyzr2.printPositions();
+
         }
         else
         {

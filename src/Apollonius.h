@@ -66,7 +66,7 @@ for( it = Si.begin(); it != Si.end(); ++it )
     double x1 = aStations.at(0).getX();
     double y1 = aStations.at(0).getY();
     double z1 = aStations.at(0).getZ();
-    double r1 = aStations.at(0).getR();
+    double r1 = aStations.at(0).getR(); // XXX to all times
 
     aStations.at(1).addToZ( 1 );
     aStations.at(2).addToZ( 2 );
