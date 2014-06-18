@@ -49,12 +49,22 @@ class Station
      //   setR( at0 );
         std::cout << "time of sending of a new signal: " << at0 << std::endl;
     }
+
+    Station( std::vector< double > vec )
+    {
+        x = vec.at(0);
+        y = vec.at(1);
+        z = vec.at(2);
+        r = vec.at(3);
+    }
+
     /**
      * @brief Sets radius.
      * @param aT0 time of sending signal
      */
     void setR( long double aT0 ) 
     {
+    //    double clight = 300000000; // [m/s]
         double clight = 299792458; // [m/s]
     	dt = t-aT0;
 	    r = dt*clight;
@@ -86,6 +96,16 @@ class Station
     void addToZ( int a )
     {
         z = z+a;
+    }
+
+    std::vector< double > stationToVector()
+    {   
+        std::vector< double > ret;
+        ret.push_back( x );
+        ret.push_back( y );
+        ret.push_back( z );
+        ret.push_back( r );
+        return ret;
     }
 
   private:

@@ -45,15 +45,22 @@ void processSignalData()
             std::vector< std::vector< int > > stationsComb;
 
             std::cout << "Number of ground stations: " << mStations.size() << std::endl;
-            stationsComb = getStationsCombinations( mStations.size(), 4 );
+
+            int aNbStationsToOneMatrix;
+//            aNbStationsToOneMatrix = 4; // TODO: temporary
+            if( mStations.size() > 4 )
+                aNbStationsToOneMatrix = 5;
+            else
+                aNbStationsToOneMatrix = 4;
+            stationsComb = getStationsCombinations( mStations.size(), aNbStationsToOneMatrix );
 	        std::cout << "Number of combinations: " << stationsComb.size() << std::endl;
             PositionsList xyzr;
-            PositionsList xyzr2;
+            //PositionsList xyzr2;
         
 
             int it = 0;
 //            std::vector< Signal >::iterator iter2;
-            for( auto iter2 = stationsComb.begin(); it < 4; ++iter2 )
+            for( auto iter2 = stationsComb.begin(); it < aNbStationsToOneMatrix; ++iter2 )
             {
                 std::cout << mStations.getStation(it).getX() << ", " << mStations.getStation(it).getY() << ", " << mStations.getStation(it).getZ() << ". R:" << mStations.getStation(it).getR() << std::endl;
                 ++it;
@@ -61,7 +68,7 @@ void processSignalData()
         	for( auto iter2 = stationsComb.begin(); iter2 != stationsComb.end(); ++iter2 )
 	        {
                 std::vector< Station > takenStations;
-	            for( int j=0; j<4; ++j )
+	            for( int j=0; j<aNbStationsToOneMatrix; ++j )
          	    {
                     takenStations.push_back(  mStations.getStation( (*iter2).at(j) ));
                 }
@@ -70,7 +77,7 @@ void processSignalData()
             xyzr.printPositions();
             mStations.printStations();
             xyzr.printAveragePosition();
-
+/*
             std::vector< Station > takenStations2;
             for( int i=0; i<mStations.size(); ++i )
             {
@@ -79,7 +86,7 @@ void processSignalData()
             }
             xyzr2.addPositions( solveApol( satId, timestamp, takenStations2 ) );
             xyzr2.printPositions();
-
+*/
         }
         else
         {

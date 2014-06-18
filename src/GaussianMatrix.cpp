@@ -10,23 +10,62 @@ GaussianMatrix::GaussianMatrix()
     {
         std::cout << "overdetermination!" << std::endl;
         overdetermined();
+        printData();
     }
 }
     
 GaussianMatrix::GaussianMatrix( std::vector< std::vector< double > > aData )
 : mData( aData )
 {
-    if( mData.size() > 4 )
+  /*  std::cout << "Constructor of GaussianMatrix" << std::endl;
+    std::cout << "mData.size()==" << mData.size() << std::endl;
+    if( mData.size() > 3 )//4 )
     {
         std::cout << "overdetermination!" << std::endl;
         overdetermined();
+        printData();
+        std::cout << "after overdetermination" << std::endl;
     }
+    std::cout << "Making Gaussian: " << std::endl;
     makeGaussian();
+    std::cout << "After Gaussian: " << std::endl;
+    printData(); */
+}
+/*
+GaussianMatrix::GaussianMatrix( const GaussianMatrix& aMatrix, int size )
+{
+    for( int i=0; i<size; ++i )
+    {
+        mData.push_back( aMatrix.getRow( i );
+    }
+}*/
+
+void GaussianMatrix::addRow( std::vector< double > aRow ) 
+{
+    mData.push_back( aRow );
+}
+
+std::vector< double > GaussianMatrix::getRow( int index )
+{
+    return mData.at(index);
 }
 
 void GaussianMatrix::setData( std::vector< std::vector< double > >  aData )
 {
+    std::cout << "setting data! " << std::endl;
     mData = aData;
+    printData(); 
+    if( mData.size() > 4 )
+    {
+        std::cout << "overdetermination!" << std::endl;
+        overdetermined();
+        printData();
+        std::cout << "after overdetermination" << std::endl;
+    }
+    std::cout << "Making Gaussian: " << std::endl;
+    makeGaussian();
+    std::cout << "After Gaussian: " << std::endl;
+    printData(); 
 }
  
 void GaussianMatrix::swapRows( int first, int second )
@@ -171,6 +210,8 @@ void GaussianMatrix::overdetermined()
         mData[i][4] = ATb[i];
     }
 
+    std::cout << "end of overdetermination: " << std::endl;
+    printData();
 }
 
 void GaussianMatrix::makeGaussian()
@@ -189,16 +230,21 @@ void GaussianMatrix::makeGaussian()
            }
        }
         if( iMax == 0 )
-            std::cout << "ERROR! MATRIX IS SINGULAR!" << std::endl;
-        swapRows( iMaxPos, k );
-        
-        for( int i=k+1; i<getRowsNb(); ++i )
         {
-            for( int j=k+1; j<getColsNb(); ++j )
+            std::cout << "ERROR! MATRIX IS SINGULAR!" << std::endl;
+            break;
+        }
+        else{
+            swapRows( iMaxPos, k );
+            
+            for( int i=k+1; i<getRowsNb(); ++i )
             {
-                (mData.at(i)).at(j) -= (mData.at(k)).at(j)*( (mData.at(i)).at(k) / (mData.at(k)).at(k));
+                for( int j=k+1; j<getColsNb(); ++j )
+                {
+                    (mData.at(i)).at(j) -= (mData.at(k)).at(j)*( (mData.at(i)).at(k) / (mData.at(k)).at(k));
+                }
+                (mData.at(i)).at(k) = 0;
             }
-            (mData.at(i)).at(k) = 0;
         }
    }
 

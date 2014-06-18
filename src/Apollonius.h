@@ -27,6 +27,27 @@ PositionsList solveApol( int aSatId, long double aTimestamp, std::vector< Statio
         std::cout << "      " << (*iter).getX() << ", " << (*iter).getY() << ", " << (*iter).getZ() << std::endl;
     }
 
+    if( aStations.size() > 4 )
+    {
+        std::cout << "solveApol() calls overdetermination! " << std::endl;
+        GaussianMatrix tempMatrix;
+        //std::vector< std::vector< double > > tempMatrix;
+        for( int i=0; i<aStations.size(); ++i )
+        {
+            tempMatrix.addRow( (aStations.at(i)).stationToVector() );
+        }
+        std::cout << "before overdetermination: " << std::endl;
+        tempMatrix.printData();
+        tempMatrix.overdetermined();
+        aStations.clear();
+        for( int i=0; i<tempMatrix.getRowsNb(); ++i )
+        {
+            aStations.push_back( Station(tempMatrix.getRow(i)));
+        }
+        std::cout << "after overdetermination: " << std::endl;
+        tempMatrix.printData();
+    }
+
     std::vector< std::tuple< int, int, int, int > > Si;
     Si.push_back( std::make_tuple( 1, 1, 1, 1 ) );
 /*    Si.push_back( std::make_tuple(-1, 1, 1, 1 ) );
@@ -68,17 +89,12 @@ for( it = Si.begin(); it != Si.end(); ++it )
     double z1 = aStations.at(0).getZ();
     double r1 = aStations.at(0).getR(); // XXX to all times
 
-    aStations.at(1).addToZ( 1 );
-    aStations.at(2).addToZ( 2 );
-    aStations.at(3).addToZ( 3 );
-
-//    std::cout << "solveApol(): " << x1 << ", " << y1 << ", " << z1 << ", " << r1 << std::endl;
     double el1, el2, el3, el4;
     el2 = (aStations.at(0).getX())*(aStations.at(0).getX()) + (aStations.at(0).getY())*(aStations.at(0).getY()) + (aStations.at(0).getZ())*(aStations.at(0).getZ());
 	el3 = (aStations.at(0).getR())*(aStations.at(0).getR());
 
-//    std::cout << "Macierz: " << std::endl;
-    for( int i=1; i<=3; ++i )
+    std::cout << "Macierz: " << std::endl;
+    for( int i=1; i<aStations.size() ; ++i )
     {
 	    el1 = (aStations.at(i).getX())*(aStations.at(i).getX()) + (aStations.at(i).getY())*(aStations.at(i).getY()) + (aStations.at(i).getZ())*(aStations.at(i).getZ());
 	    el4 = (aStations.at(i).getR())*(aStations.at(i).getR());
@@ -89,9 +105,11 @@ for( it = Si.begin(); it != Si.end(); ++it )
 		     (s[0]*r1-s[i]*aStations.at(i).getR())*2,
 		     el1-el2+el3-el4 };
         matrix.push_back( row );
-//        std::cout << row.at(0) << " " << row.at(1) << " " << row.at(2) << " " << row.at(3) << std::endl; 
+        std::cout << row.at(0) << " " << row.at(1) << " " << row.at(2) << " " << row.at(3) << std::endl; 
     }
+
     GaussianMatrix gaussMatrix( matrix );
+    gaussMatrix.makeGaussian();
     M = gaussMatrix(1,5);
     N = -(gaussMatrix(1,4));
     P = gaussMatrix(2,5);

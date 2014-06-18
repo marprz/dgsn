@@ -15,6 +15,7 @@ class GaussianMatrix
   public:
     GaussianMatrix(); //{}
     GaussianMatrix( std::vector< std::vector< double > >  aData );
+ //   GaussianMatrix( const GaussianMatrix& aMatrix, int size );
     void setData( std::vector< std::vector< double > >  aData );
     void overdetermined();
     void makeGaussian();
@@ -23,6 +24,8 @@ class GaussianMatrix
     double operator() ( int r, int c ){ return (mData.at(r-1)).at(c-1); } 
     int getRowsNb();
     int getColsNb();
+    std::vector< double > getRow( int index );
+    void addRow( std::vector< double > );
 
   private:
     double get( int row, int col ){ return (mData.at(row)).at(col); }
