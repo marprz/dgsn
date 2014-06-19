@@ -34,9 +34,9 @@ void processSignalData()
         int satId = (*iter).getSatId();
         long double timestamp = (*iter).getTimestamp();
 
-        if( (*iter).getSize() > 3 )
+        if( (*iter).getSize() > 3 && timestamp>2334 && timestamp<2335 )
         {
-            std::cout << "For satellite " << (*iter).getSatId() << " and timestamp " << (*iter).getTimestamp() << " there are " << (*iter).getSize() << " GS" << std::endl;
+            std::cout << "For satellite " << (*iter).getSatId() << " and sending time " << (*iter).getTimestamp() << " there are " << (*iter).getSize() << " GS" << std::endl;
             (*iter).printSignal();
             Stations mStations;
             
@@ -47,36 +47,44 @@ void processSignalData()
             std::cout << "Number of ground stations: " << mStations.size() << std::endl;
 
             int aNbStationsToOneMatrix;
-//            aNbStationsToOneMatrix = 4; // TODO: temporary
+//            aNbStationsToOneMatrix = 4; // TODO: 
             if( mStations.size() > 4 )
                 aNbStationsToOneMatrix = 5;
             else
                 aNbStationsToOneMatrix = 4;
             stationsComb = getStationsCombinations( mStations.size(), aNbStationsToOneMatrix );
-	        std::cout << "Number of combinations: " << stationsComb.size() << std::endl;
+
+            std::cout << "stationsComb.size() = " << stationsComb.size() << std::endl;
             PositionsList xyzr;
             //PositionsList xyzr2;
         
 
             int it = 0;
 //            std::vector< Signal >::iterator iter2;
-            for( auto iter2 = stationsComb.begin(); it < aNbStationsToOneMatrix; ++iter2 )
+/*            for( auto iter2 = stationsComb.begin(); it < aNbStationsToOneMatrix; ++iter2 )
             {
                 std::cout << mStations.getStation(it).getX() << ", " << mStations.getStation(it).getY() << ", " << mStations.getStation(it).getZ() << ". R:" << mStations.getStation(it).getR() << std::endl;
                 ++it;
-            }
+            }*/
+            std::cout << "PROBLEM A" << std::endl;
         	for( auto iter2 = stationsComb.begin(); iter2 != stationsComb.end(); ++iter2 )
 	        {
                 std::vector< Station > takenStations;
 	            for( int j=0; j<aNbStationsToOneMatrix; ++j )
          	    {
+                    //takenStations.push_back(  mStations.getStation( stationsComb.begin().at(j) ));
                     takenStations.push_back(  mStations.getStation( (*iter2).at(j) ));
                 }
                 xyzr.addPositions( solveApol( satId, timestamp, takenStations ) );
+                std::cout << "PROBLEM B" << std::endl;
+                iter2 = stationsComb.end()-1; // TODO: usunac
+                std::cout << "PROBLEM C" << std::endl;
             }
+            std::cout << "PROBLEM D" << std::endl;
             xyzr.printPositions();
             mStations.printStations();
             xyzr.printAveragePosition();
+            std::cout << "PROBLEM E" << std::endl;
 /*
             std::vector< Station > takenStations2;
             for( int i=0; i<mStations.size(); ++i )
@@ -87,6 +95,8 @@ void processSignalData()
             xyzr2.addPositions( solveApol( satId, timestamp, takenStations2 ) );
             xyzr2.printPositions();
 */
+
+//            iter = mSignals.end();
         }
         else
         {
@@ -105,13 +115,12 @@ void loadGSData( const char* lFileName )//, Signals& mSignals )
 
     double ax, ay, az;
     long double at0, adt;
-    int satId;
+    int satId = 0; // TODO: tymczasowo 0
     std::string op1;
    // lFile >> at;
   //  mStations.setTime( at );
-    while( lFile >> ax >> ay >> az >> adt >> at0 >> satId >> op1  )
+    while( lFile >> ax >> ay >> az >> adt >> at0 ) // >> at0 >> satId >> op1  )
     {
-    //    at0 = 0; // tymczasowo
         bool satKnown = false;
         std::vector< Signal >::iterator iter;
 //        std::cout << "mSignals.size() == " << mSignals.size() << std::endl;
