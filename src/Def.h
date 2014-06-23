@@ -198,6 +198,11 @@ class Stations
 	    std::cout << std::endl;
     }
 
+    void clear()
+    {
+        mStations.clear();
+    }
+
 //  private:
     std::vector< Station > mStations;  
     long double mT;

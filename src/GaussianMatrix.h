@@ -26,9 +26,9 @@ class GaussianMatrix
     int getColsNb();
     std::vector< double > getRow( int index );
     void addRow( std::vector< double > );
+    double get( int row, int col ){ return (mData.at(row)).at(col); }
 
   private:
-    double get( int row, int col ){ return (mData.at(row)).at(col); }
     void swapRows( int first, int second );
     int findMaxRow( int col ); 
     void multiply( int col );

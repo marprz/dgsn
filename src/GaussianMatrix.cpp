@@ -149,33 +149,39 @@ int GaussianMatrix::getColsNb()
 // very dirty code:
 void GaussianMatrix::overdetermined()
 {
-    Matrix A;
+    std::cout << "GaussianMatrix::overdetermined(): " << std::endl;
+    int newN = 4;
     int N = getRowsNb();
-    for( int i=0; i<N; ++i )
-    {
-        Row row( 4, 0 );
-        A.push_back( row );
-    }
-    Row b( N, 0 );
+    printData();
+    double A[N][4];
+    double b[N];
 
     for( int i=0; i<N; ++i )
     {
-        for( int j=0; j<N-1; ++j )
+        for( int j=0; j<4; ++j )
         {
             A[i][j] = mData[i][j];
         }
         b[i] = mData[i][4];
     }
-    
-    Matrix ATA;
-    for( int i=0; i<4; ++i )
+ 
+    mData.clear();
+    mData.resize( newN );
+    for( int i=0; i<N; ++i )
     {
-        Row row( 4,0 );
-        ATA.push_back( row );
+        mData[i].resize( 5 );
     }
-    Row ATb( 4, 0 );
-    
-    for( int i=0; i<4; ++i )
+
+    double ATA[newN][4];
+    double ATb[newN];
+    for( int i=0; i<newN; ++i )
+    {
+        ATb[i] = 0;
+        for( int j=0; j<4; ++j )
+            ATA[i][j] = 0;
+    }
+
+    for( int i=0; i<newN; ++i )
     {
         for( int j=0; j<4; ++j )
         {
@@ -186,7 +192,7 @@ void GaussianMatrix::overdetermined()
         }
     }
 
-    for( int i=0; i<4; ++i )
+    for( int i=0; i<newN; ++i )
     {
         for( int k=0; k<N; ++k )
         {
@@ -194,14 +200,7 @@ void GaussianMatrix::overdetermined()
         }
     }
 
-    mData.clear();
-    mData.resize( 4 );
-    for( int i=0; i<4; ++i )
-    {
-        mData[i].resize( 5 );
-    }
-
-    for( int i=0; i<4; ++i )
+    for( int i=0; i<newN; ++i )
     {
         for( int j=0; j<4; ++j )
         {
@@ -210,8 +209,8 @@ void GaussianMatrix::overdetermined()
         mData[i][4] = ATb[i];
     }
 
-    std::cout << "end of overdetermination: " << std::endl;
     printData();
+    std::cout << "end of overdetermination!" << std::endl;
 }
 
 void GaussianMatrix::makeGaussian()
@@ -280,6 +279,7 @@ void GaussianMatrix::makeGaussian()
         }
    }
 
+   std::cout << "Gaussian: " << std::endl;
    printData();
 }
 

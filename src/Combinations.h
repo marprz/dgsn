@@ -44,6 +44,7 @@ uint64_t nextBitCombination( uint64_t currentBitCombination )
  */
 std::vector< std::vector< int > > getStationsCombinations( int n, int k )
 {
+    std::cout << "looking for combination: (" << n << ", " << k << ")" << std::endl;
   uint64_t v = initialBitCombination( n, k ); // current permutation of bits
   uint64_t lastCombination = ( v<<(n-k) );  
   uint64_t w = v; 
@@ -76,6 +77,7 @@ std::vector< std::vector< int > > getStationsCombinations( int n, int k )
     } 
     stationsCombinations.push_back( currentStations );
   }
+  std::cout << "Found " << stationsCombinations.size() << std::endl;
   return stationsCombinations;
 }
 
