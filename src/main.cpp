@@ -19,12 +19,9 @@
 #include "GaussianMatrix.h"
 #include "Apollonius.h"
 
-//PositionsList solveApol( std::vector< Station > aStations );
-
-// int - timestamp, Stations - positions of gs and distances from satellite
-//typedef std::tuple< int, Stations > Signal;
-//typedef std::vector< Signal > Signals;
-
+/**  
+ * processing of all collected signals
+ */
 void processSignalData()
 {
     std::cout << "********* PROCESSING SIGNALS *****************************" << std::endl;
@@ -41,7 +38,7 @@ void processSignalData()
         int satId = (*iter).getSatId();
         long double timestamp = (*iter).getTimestamp();
 
-        if( (*iter).getSize() > 3 ) //&& timestamp>2334 && timestamp<2600 )
+        if( (*iter).getSize() > 4 )
         {
             std::cout << "For satellite " << (*iter).getSatId() << " and sending time " << (*iter).getTimestamp() << " there are " << (*iter).getSize() << " GS" << std::endl;
             (*iter).printSignal();
@@ -50,10 +47,60 @@ void processSignalData()
             (*iter).convertSignalToStation( mStations );
 
             std::vector< std::vector< int > > stationsComb;
-
+            
             std::cout << "Number of ground stations: " << mStations.size() << std::endl;
             PositionsList xyzr;
-            xyzr.addPositions( solveApol( satId, timestamp, mStations ) );
+            //xyzr.addPositions( solveApol( satId, timestamp, mStations ) );
+            
+            int N = mStations.size();
+/* // last two combinations:
+            if( N>6 )
+            {
+                Stations aStations1;
+                Stations aStations2;
+                aStations1.addStation( mStations.getStation( N-7 ) );
+                for( int i=6; i>1; --i )
+                {
+                    aStations1.addStation( mStations.getStation( N-i ) );
+                    aStations2.addStation( mStations.getStation( N-i ) );
+                }
+                aStations2.addStation( mStations.getStation( N-1 ) );
+
+                xyzr.addPositions( solveApol( satId, timestamp, aStations1 ) );
+                xyzr.addPositions( solveApol( satId, timestamp, aStations2 ) );
+            }*/
+            // only  sets of 5
+        /*    if( N>5 )
+            {
+                for( int i=0; i<N-5; ++i )
+                {
+                    Stations aStations;
+                    for( int j=0; j<5; ++j )
+                    {
+                        aStations.addStation( mStations.getStation( i+j ) );
+                    }
+                    xyzr.addPositions( solveApol( satId, timestamp, aStations ) );
+                }
+            }*/
+            /*
+            if( N>5 )
+            {
+                stationsComb = getStationsCombinations( N, 5 );
+                std::vector< std::vector< int > >::iterator iterSt;
+                for( iterSt = stationsComb.begin(); iterSt != stationsComb.end(); ++iter )
+                {
+                    Stations aStations;
+                    for( int i=0; i<5; ++i )
+                        aStations.addStation( mStations.getStation( (*iterSt).at(i) ) );
+
+                    xyzr.addPositions( solveApol( satId, timestamp, aStations ) );
+
+                }
+            }*/
+//            else
+            {
+                xyzr.addPositions( solveApol( satId, timestamp, mStations ) );
+            }
             xyzr.printPositions();
             for( int i=0; i<xyzr.size(); ++i )
             {
@@ -67,7 +114,14 @@ void processSignalData()
     }
     lResultFile.close();
 }
+/** loading data from file "stations.txt"
+ *  @param lFileName a name of file which contains data
+ *  @param mStations a contener of stations 
+ */
 
+/** loading data from file 
+ *  @param name of file with data
+ */
 void loadGSData( const char* lFileName )
 {
     Stations mStations;
@@ -110,6 +164,9 @@ void loadGSData( const char* lFileName )
     lFile.close();
 }
 
+/** loading data from all .gsd files in given folder
+ *  @param lDirName name of folder with .gsd files
+ */
 void loadFromDirectory( char* lDirName )
 {
     std::string file;
@@ -139,7 +196,7 @@ void loadFromDirectory( char* lDirName )
 }
 
 /** loading data from file "stations.txt"
- *  @lFileName a name of file which contains data
+ *  @param lFileName a name of file which contains data
  *  @param mStations a contener of stations 
  */
 void loadStations( char* lFileName, Stations& mStations )

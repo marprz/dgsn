@@ -10,7 +10,7 @@
 /// Row type
 typedef std::vector< double > Row;
 /// Matrix type
-typedef std::vector< Row > Matrix;
+//typedef std::vector< Row > Matrix;
 /**
  * @brief Station class
  */

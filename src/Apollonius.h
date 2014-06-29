@@ -10,9 +10,10 @@
 
 #include "Def.h"
 #include "GaussianMatrix.h"
+#include "Matrix.h"
 
 std::vector< Signal > mSignals;
-
+class Matrix;
 
 
 /** solving Apollonius problem for set of stations
@@ -21,55 +22,51 @@ std::vector< Signal > mSignals;
 PositionsList solveApol( int aSatId, long double aTimestamp, Stations aStations ) 
 {
     std::cout << std::endl << "Solving Apollonius problem for positions: " << std::endl;
-/*    std::vector< Station >::iterator iter;
-    for( iter = aStations.begin(); iter != aStations.end(); ++iter )
+    for( int i=0; i < aStations.size(); ++i )
     {
-        std::cout << "      " << (*iter).getX() << ", " << (*iter).getY() << ", " << (*iter).getZ() << std::endl;
+        std::cout << "      " << aStations.getStation(i).getX() << ", " << aStations.getStation(i).getY() << ", " << aStations.getStation(i).getZ() << std::endl;
     }
-*/
+
+    /*
     std::vector< std::tuple< int, int, int, int > > Si;
     Si.push_back( std::make_tuple( 1, 1, 1, 1 ) );
     Si.push_back( std::make_tuple(-1,-1,-1,-1 ) );
+    */
 
-
-PositionsList tempcalculatedPositions;
-std::vector< std::tuple< int, int, int, int > >::iterator it;
-it = Si.begin();
-for( it = Si.begin(); it != Si.end(); ++it )
-{
-    int s[4];
-    for( int i=0; i<4; ++i )
+    int stN = aStations.size();
+    PositionsList tempcalculatedPositions;
+    std::vector< std::tuple< int, int, int, int > >::iterator it;
+//    it = Si.begin();
+//    for( it = Si.begin(); it != Si.end(); ++it )
+    {
+        // TODO: s[] should be improved
+        int s[stN];
+        for( int i=0; i<stN; ++i )
+            s[i] = -1;
+/*    for( int i=0; i<4; ++i )
     { 
         s[0]=std::get<0>(*it);
         s[1]=std::get<1>(*it);
         s[2]=std::get<2>(*it);
         s[3]=std::get<3>(*it);
     }
-
+*/
     PositionsList calculatedPositions;
     std::vector< std::vector< double > >  matrix;
-    double M,N,P,Q,R,S,a,b,c,rs,xs,ys,zs;
-
-    double x1 = aStations.getStation(0).getX();
-    double y1 = aStations.getStation(0).getY();
-    double z1 = aStations.getStation(0).getZ();
-    double r1 = aStations.getStation(0).getR(); // XXX to all times
-
-    double el1, el2, el3, el4;
-    el2 = (aStations.getStation(0).getX())*(aStations.getStation(0).getX()) + (aStations.getStation(0).getY())*(aStations.getStation(0).getY()) + (aStations.getStation(0).getZ())*(aStations.getStation(0).getZ());
-	el3 = (aStations.getStation(0).getR())*(aStations.getStation(0).getR());
 
     std::cout << "Macierz: " << std::endl;
     for( int i=1; i<aStations.size() ; ++i )
     {
-	    el1 = (aStations.getStation(i).getX())*(aStations.getStation(i).getX()) + (aStations.getStation(i).getY())*(aStations.getStation(i).getY()) + (aStations.getStation(i).getZ())*(aStations.getStation(i).getZ());
-	    el4 = (aStations.getStation(i).getR())*(aStations.getStation(i).getR());
+        double dx = aStations.getStation(i).getX()-aStations.getStation(i-1).getX();
+        double dy = aStations.getStation(i).getY()-aStations.getStation(i-1).getY();
+        double dz = aStations.getStation(i).getZ()-aStations.getStation(i-1).getZ();
+        double dr = aStations.getStation(i).getR()-aStations.getStation(i-1).getR();
 
-    	Row row = { ((aStations.getStation(i).getX())-x1)*2,
-		     ((aStations.getStation(i).getY())-y1)*2,
-		     ((aStations.getStation(i).getZ())-z1)*2,
-		     (s[0]*r1-s[i]*aStations.getStation(i).getR())*2,
-		     el1-el2+el3-el4 };
+        double r1 = pow(aStations.getStation(i-1).getX(),2)+ pow(aStations.getStation(i-1).getY(),2) + pow(aStations.getStation(i-1).getZ(),2);
+        double r2 = pow(aStations.getStation( i ).getX(),2) + pow(aStations.getStation( i ).getY(),2) + pow(aStations.getStation( i ).getZ(),2);
+        Row row = { dx*2, dy*2, dz*2, 2*(s[i-1]*aStations.getStation(i-1).getR()-s[i]*aStations.getStation(i).getR()), 
+		     r2-r1+pow(aStations.getStation(i-1).getR(),2) - pow(aStations.getStation(i).getR(),2)};
+
         matrix.push_back( row );
         std::cout << row.at(0) << " " << row.at(1) << " " << row.at(2) << " " << row.at(3) << std::endl; 
     }
@@ -77,19 +74,12 @@ for( it = Si.begin(); it != Si.end(); ++it )
     if( aStations.size() > 4 )
     {
             GaussianMatrix tempMatrix( matrix );
-            /*GaussianMatrix tempMatrix;
-            for( int i=0; i<aStations.size(); ++i )
-            {
-                tempMatrix.addRow( (aStations.getStation(i)).stationToVector() );
-            }*/
             tempMatrix.printData();
-            std::cout << "overdetermination: " << std::endl;
-            tempMatrix.overdetermined();
-/*            aStations.clear();
-            for( int i=0; i<tempMatrix.getRowsNb(); ++i )
+            if( aStations.size()>5 )
             {
-                aStations.addStation( Station(tempMatrix.getRow(i)));
-            }*/
+                std::cout << "overdetermination: " << std::endl;
+                tempMatrix.overdetermined();
+            }
             std::cout << "after overdetermination: " << std::endl;
             tempMatrix.printData();
             tempMatrix.makeGaussian();
@@ -98,12 +88,14 @@ for( it = Si.begin(); it != Si.end(); ++it )
             double ys = tempMatrix.get(1,4);
             double zs = tempMatrix.get(2,4);
             double rs = tempMatrix.get(3,4);
+         
             std::vector< double > solution = { xs, ys, zs, rs };
             calculatedPositions.addPosition( solution );
             std::cout << /*"satId=" << aSatId <<*/ "timestamp=" << aTimestamp << " " << xs << " " << ys << " " << std::setprecision(20) <<  zs/* << " " << rs*/ << std::endl << std::endl;
     }
     else
     {
+/*        double M,N,P,Q,R,S,a,b,c,rs,xs,ys,zs;
         GaussianMatrix gaussMatrix( matrix );
         std::cout << "gaussian: " << std::endl;
         gaussMatrix.makeGaussian();
@@ -114,7 +106,7 @@ for( it = Si.begin(); it != Si.end(); ++it )
         R = gaussMatrix(3,5);
         S = -(gaussMatrix(3,4));
 
-        std::cout << "ignored calculations " << aTimestamp << ": " << gaussMatrix(1,1) << " " << gaussMatrix(2,2) << " " << gaussMatrix(3,3) << std::endl;
+        std::cout << "timestamp = " << aTimestamp << ": " << gaussMatrix(1,1) << " " << gaussMatrix(2,2) << " " << gaussMatrix(3,3) << std::endl;
         a = N*N+Q*Q+S*S-1;
         b = 2*(M-x1)*N+2*(P-y1)*Q+2*(R-z1)*S-2*r1;
         c = (M-x1)*(M-x1)+(P-y1)*(P-y1)+(R-z1)*(R-z1)-r1*r1;
@@ -140,7 +132,7 @@ for( it = Si.begin(); it != Si.end(); ++it )
             std::vector< double > solution = { xs, ys, zs, rs };
             calculatedPositions.addPosition( solution );
 
-            std::cout << /*"satId=" << aSatId <<*/ "timestamp=" << aTimestamp << " " << xs << " " << ys << " " << zs/* << " " << rs*/ << std::endl << std::endl;
+            std::cout <<  "timestamp=" << aTimestamp << " " << xs << " " << ys << " " << zs << std::endl << std::endl;
         }
 
         rs = p2 ;
@@ -153,8 +145,8 @@ for( it = Si.begin(); it != Si.end(); ++it )
             std::vector< double > solution2 = { xs, ys, zs, rs };
             calculatedPositions.addPosition( solution2 );
     
-            std::cout << /*"satId=" << aSatId <<*/ "timestamp=" << aTimestamp << " " << xs << " " << ys << " " << zs/* << " " << rs*/ << std::endl << std::endl;
-        }
+            std::cout << "timestamp=" << aTimestamp << " " << xs << " " << ys << " " << zs << std::endl << std::endl;
+        }*/
         tempcalculatedPositions=calculatedPositions;
     } 
 }
